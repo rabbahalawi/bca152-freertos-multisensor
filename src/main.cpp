@@ -3,48 +3,47 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#include "driver/gpio.h"
 
-// 1. Sensor Data Structure
+// Telemetry structure holding all Part IV sensor readings
 typedef struct {
-    char sensor_name[16];
-    float value;
-} sensor_data_t;
+    float temperature;
+    float humidity;
+    float light_percent;
+} sensor_telemetry_t;
 
-// 2. Global Queue Handle
 QueueHandle_t sensorQueue = NULL;
 
-// Task 1: Temperature Sensor Producer
-void vTemperatureTask(void *pvParameters) {
-    sensor_data_t data;
-    strncpy(data.sensor_name, "TEMP", sizeof(data.sensor_name));
-    
+// Step 22: SensorTask using vTaskDelayUntil to prevent timing drift
+void vSensorTask(void *pvParameters) {
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    const TickType_t xFrequency = pdMS_TO_TICKS(2000); // Strict 2000ms periodic cycle
+
+    sensor_telemetry_t data;
+
     while (1) {
-        data.value = 26.5f; // Simulated temperature reading
+        // Step 20: DHT22 Simulated Values
+        data.temperature = 25.40f;
+        data.humidity = 61.20f;
+
+        // Step 21: Simulated LDR ADC representation (0 - 100%)
+        data.light_percent = 78.5f; 
+
+        // Send combined telemetry to queue
         xQueueSend(sensorQueue, &data, portMAX_DELAY);
-        vTaskDelay(pdMS_TO_TICKS(2000));
+
+        // Guarantees execution at exactly fixed intervals regardless of task work duration
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
 }
 
-// Task 2: Pressure Sensor Producer
-void vPressureTask(void *pvParameters) {
-    sensor_data_t data;
-    strncpy(data.sensor_name, "PRESSURE", sizeof(data.sensor_name));
-    
-    while (1) {
-        data.value = 1013.25f; // Simulated pressure reading
-        xQueueSend(sensorQueue, &data, portMAX_DELAY);
-        vTaskDelay(pdMS_TO_TICKS(3000));
-    }
-}
-
-// Task 3: Central Telemetry Consumer (Receives data from queue)
+// Telemetry Display Task
 void vTelemetryTask(void *pvParameters) {
-    sensor_data_t receivedData;
-    
+    sensor_telemetry_t rxData;
     while (1) {
-        // Wait indefinitely for data from any sensor task
-        if (xQueueReceive(sensorQueue, &receivedData, portMAX_DELAY) == pdTRUE) {
-            printf("[TELEMETRY QUEUE] Data from %s: %.2f\n", receivedData.sensor_name, receivedData.value);
+        if (xQueueReceive(sensorQueue, &rxData, portMAX_DELAY) == pdTRUE) {
+            printf("[SENSOR DATA] Temperature: %.2f C | Humidity: %.2f %% | Light: %.1f %%\n",
+                   rxData.temperature, rxData.humidity, rxData.light_percent);
             fflush(stdout);
         }
     }
@@ -52,20 +51,13 @@ void vTelemetryTask(void *pvParameters) {
 
 extern "C" void app_main(void) {
     vTaskDelay(pdMS_TO_TICKS(100));
-    printf("\n--- BCA152 Queue Telemetry Active ---\n");
+    printf("\n--- Part IV Sensor Subsystem Active ---\n");
     fflush(stdout);
 
-    // Create Queue to hold up to 10 sensor messages
-    sensorQueue = xQueueCreate(10, sizeof(sensor_data_t));
+    sensorQueue = xQueueCreate(10, sizeof(sensor_telemetry_t));
 
     if (sensorQueue != NULL) {
-        // Spawn Sensor Producer Tasks
-        xTaskCreate(vTemperatureTask, "TempTask", 2048, NULL, 2, NULL);
-        xTaskCreate(vPressureTask, "PressureTask", 2048, NULL, 2, NULL);
-        
-        // Spawn Telemetry Consumer Task
+        xTaskCreate(vSensorTask, "SensorTask", 2048, NULL, 2, NULL);
         xTaskCreate(vTelemetryTask, "TelemetryTask", 2048, NULL, 1, NULL);
-    } else {
-        printf("Failed to create sensorQueue!\n");
     }
 }

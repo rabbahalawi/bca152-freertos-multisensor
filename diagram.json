@@ -15,12 +15,12 @@
       "id": "dht1",
       "top": -100,
       "left": 150,
-      "attrs": { "temperature": "25", "humidity": "50" }
+      "attrs": { "temperature": "25.4", "humidity": "61.2" }
     },
     {
-      "type": "wokwi-bmp280",
-      "id": "bmp1",
-      "top": 100,
+      "type": "wokwi-photoresistor-sensor",
+      "id": "ldr1",
+      "top": 120,
       "left": 150,
       "attrs": {}
     }
@@ -31,10 +31,9 @@
     [ "dht1:VCC", "esp:3V3", "red", [ "v0" ] ],
     [ "dht1:GND", "esp:GND.1", "black", [ "v0" ] ],
     [ "dht1:SDA", "esp:4", "green", [ "v0" ] ],
-    [ "bmp1:VCC", "esp:3V3", "red", [ "v0" ] ],
-    [ "bmp1:GND", "esp:GND.2", "black", [ "v0" ] ],
-    [ "bmp1:SDA", "esp:21", "blue", [ "v0" ] ],
-    [ "bmp1:SCL", "esp:22", "yellow", [ "v0" ] ]
+    [ "ldr1:VCC", "esp:3V3", "red", [ "v0" ] ],
+    [ "ldr1:GND", "esp:GND.2", "black", [ "v0" ] ],
+    [ "ldr1:AO", "esp:34", "blue", [ "v0" ] ]
   ],
   "dependencies": {}
 }
