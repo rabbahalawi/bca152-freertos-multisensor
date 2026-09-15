@@ -1,49 +1,68 @@
 #include <stdio.h>
-#include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
-#include "driver/gpio.h"
 
-// Telemetry structure holding all Part IV sensor readings
-typedef struct {
+// Step 24: Define Sensor Data exactly as specified
+struct SensorData {
     float temperature;
     float humidity;
-    float light_percent;
-} sensor_telemetry_t;
+    int lightLevel;
+    bool motionDetected;
+};
 
-QueueHandle_t sensorQueue = NULL;
+// Step 25: Create Queues for Consumers
+QueueHandle_t displayQueue = NULL;
+QueueHandle_t alarmQueue = NULL;
 
-// Step 22: SensorTask using vTaskDelayUntil to prevent timing drift
+// Producer Task (SensorTask)
 void vSensorTask(void *pvParameters) {
     TickType_t xLastWakeTime = xTaskGetTickCount();
-    const TickType_t xFrequency = pdMS_TO_TICKS(2000); // Strict 2000ms periodic cycle
+    const TickType_t xFrequency = pdMS_TO_TICKS(2000); 
 
-    sensor_telemetry_t data;
+    struct SensorData data;
 
     while (1) {
-        // Step 20: DHT22 Simulated Values
+        // Simulate sensor readings
         data.temperature = 25.40f;
         data.humidity = 61.20f;
+        data.lightLevel = 85; 
+        data.motionDetected = true; // Simulating motion trigger
 
-        // Step 21: Simulated LDR ADC representation (0 - 100%)
-        data.light_percent = 78.5f; 
+        // Send data to both consumer queues
+        xQueueSend(displayQueue, &data, portMAX_DELAY);
+        xQueueSend(alarmQueue, &data, portMAX_DELAY);
 
-        // Send combined telemetry to queue
-        xQueueSend(sensorQueue, &data, portMAX_DELAY);
-
-        // Guarantees execution at exactly fixed intervals regardless of task work duration
+        // Maintain strict periodic execution (Part IV requirement carried over)
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
 }
 
-// Telemetry Display Task
-void vTelemetryTask(void *pvParameters) {
-    sensor_telemetry_t rxData;
+// Consumer 1 (DisplayTask)
+void vDisplayTask(void *pvParameters) {
+    struct SensorData rxData;
     while (1) {
-        if (xQueueReceive(sensorQueue, &rxData, portMAX_DELAY) == pdTRUE) {
-            printf("[SENSOR DATA] Temperature: %.2f C | Humidity: %.2f %% | Light: %.1f %%\n",
-                   rxData.temperature, rxData.humidity, rxData.light_percent);
+        if (xQueueReceive(displayQueue, &rxData, portMAX_DELAY) == pdTRUE) {
+            printf("[DISPLAY] Temp: %.2f C | Hum: %.2f %% | Light: %d | Motion: %s\n",
+                   rxData.temperature, rxData.humidity, rxData.lightLevel,
+                   rxData.motionDetected ? "YES" : "NO");
+            fflush(stdout);
+        }
+    }
+}
+
+// Consumer 2 (AlarmTask)
+void vAlarmTask(void *pvParameters) {
+    struct SensorData rxData;
+    while (1) {
+        if (xQueueReceive(alarmQueue, &rxData, portMAX_DELAY) == pdTRUE) {
+            // Trigger alarm logic based on data
+            if (rxData.motionDetected) {
+                printf(">> [ALARM] Motion detected! Security alert!\n");
+            }
+            if (rxData.temperature > 35.0f) {
+                printf(">> [ALARM] High temperature warning!\n");
+            }
             fflush(stdout);
         }
     }
@@ -51,13 +70,17 @@ void vTelemetryTask(void *pvParameters) {
 
 extern "C" void app_main(void) {
     vTaskDelay(pdMS_TO_TICKS(100));
-    printf("\n--- Part IV Sensor Subsystem Active ---\n");
+    printf("\n--- Part V Data Communication Active ---\n");
     fflush(stdout);
 
-    sensorQueue = xQueueCreate(10, sizeof(sensor_telemetry_t));
+    // Initialize queues (Capacity of 10 items each)
+    displayQueue = xQueueCreate(10, sizeof(struct SensorData));
+    alarmQueue = xQueueCreate(10, sizeof(struct SensorData));
 
-    if (sensorQueue != NULL) {
+    if (displayQueue != NULL && alarmQueue != NULL) {
+        // Spawn tasks
         xTaskCreate(vSensorTask, "SensorTask", 2048, NULL, 2, NULL);
-        xTaskCreate(vTelemetryTask, "TelemetryTask", 2048, NULL, 1, NULL);
+        xTaskCreate(vDisplayTask, "DisplayTask", 2048, NULL, 1, NULL);
+        xTaskCreate(vAlarmTask, "AlarmTask", 2048, NULL, 1, NULL);
     }
 }
