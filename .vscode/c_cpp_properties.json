@@ -245,6 +245,7 @@
                 "C:/Users/Lenovo/.platformio/packages/framework-espidf/components/perfmon/include",
                 "C:/Users/Lenovo/.platformio/packages/framework-espidf/components/rt/include",
                 "C:/Users/Lenovo/.platformio/packages/framework-espidf/components/spiffs/include",
+                "C:/Users/Lenovo/Documents/PlatformIO/Projects/bca152-freertos-multisensor/components/ssd1306",
                 ""
             ],
             "browse": {
@@ -487,6 +488,7 @@
                     "C:/Users/Lenovo/.platformio/packages/framework-espidf/components/perfmon/include",
                     "C:/Users/Lenovo/.platformio/packages/framework-espidf/components/rt/include",
                     "C:/Users/Lenovo/.platformio/packages/framework-espidf/components/spiffs/include",
+                    "C:/Users/Lenovo/Documents/PlatformIO/Projects/bca152-freertos-multisensor/components/ssd1306",
                     ""
                 ]
             },
