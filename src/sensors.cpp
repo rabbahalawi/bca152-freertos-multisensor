@@ -1,10 +1,14 @@
 #include "sensors.h"
 #include "rtos_objects.h"
+#include "system_state.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "driver/gpio.h"
 #include "esp_adc/adc_oneshot.h"
 #include "esp_timer.h"
 #include "esp_rom_sys.h"
+
+#define PIR_SENSOR_PIN GPIO_NUM_33 // Pin connected to PIR output in diagram.json
 
 bool read_dht22(float *temp, float *humidity) {
     uint8_t data[5] = {0};
@@ -43,7 +47,6 @@ bool read_dht22(float *temp, float *humidity) {
 }
 
 void vSensorTask(void *pvParameters) {
-    // Yield to allow lower-priority DisplayTask (Priority 1) to initialize hardware first
     vTaskDelay(pdMS_TO_TICKS(100));
 
     TickType_t xLastWakeTime = xTaskGetTickCount();
@@ -55,7 +58,7 @@ void vSensorTask(void *pvParameters) {
     
     if (adc_oneshot_new_unit(&init_config1, &adc1_handle) == ESP_OK) {
         adc_oneshot_chan_cfg_t config = {};
-        config.atten = ADC_ATTEN_DB_12; // Correct enum for modern ESP-IDF
+        config.atten = ADC_ATTEN_DB_12;
         config.bitwidth = ADC_BITWIDTH_DEFAULT;
         adc_oneshot_config_channel(adc1_handle, ADC_CHANNEL_6, &config);
     }
@@ -76,5 +79,39 @@ void vSensorTask(void *pvParameters) {
 
         xQueueSend(displayQueue, &data, 0);
         vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(2000));
+    }
+}
+
+void vMotionTask(void *pvParameters) {
+    vTaskDelay(pdMS_TO_TICKS(100));
+
+    gpio_config_t pir_conf = {};
+    pir_conf.pin_bit_mask = (1ULL << PIR_SENSOR_PIN);
+    pir_conf.mode = GPIO_MODE_INPUT;
+    pir_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+    pir_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
+    pir_conf.intr_type = GPIO_INTR_DISABLE;
+    gpio_config(&pir_conf);
+
+    TickType_t xLastMotionTime = xTaskGetTickCount();
+    const TickType_t xInactivityTimeout = pdMS_TO_TICKS(15000);
+
+    while (1) {
+        int motionState = gpio_get_level(PIR_SENSOR_PIN);
+
+        if (motionState == 1) {
+            xLastMotionTime = xTaskGetTickCount();
+            
+            if (g_systemState == SystemState::INACTIVE) {
+                g_systemState = SystemState::ACTIVE;
+            }
+        }
+
+        if (g_systemState == SystemState::ACTIVE && 
+           (xTaskGetTickCount() - xLastMotionTime >= xInactivityTimeout)) {
+            g_systemState = SystemState::INACTIVE;
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }

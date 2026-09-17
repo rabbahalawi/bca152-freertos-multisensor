@@ -1,65 +1,72 @@
 #include "display.h"
-#include "system_state.h"
-#include "input.h"
-#include "sensors.h"
 #include "rtos_objects.h"
+#include "system_state.h"
+#include "sensors.h"
 #include "ssd1306.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
 #include <stdio.h>
-#include <string.h>
 
 void vDisplayTask(void *pvParameters) {
     SSD1306_t dev;
-    i2c_master_init(&dev, GPIO_NUM_21, GPIO_NUM_22, GPIO_NUM_NC);
+    i2c_master_init(&dev, CONFIG_SDA_GPIO, CONFIG_SCL_GPIO, CONFIG_RESET_GPIO);
     ssd1306_init(&dev, 128, 64);
     ssd1306_clear_screen(&dev, false);
+    ssd1306_contrast(&dev, 0xff);
 
+    SensorData sensorData = {24.0f, 55.0f, 50, false};
     DisplayMode currentMode = DisplayMode::TEMPERATURE;
-    SensorData sensorData = {};
     NavDirection navDir;
-    char buffer[20];
+
+    char titleBuf[32];
+    char valueBuf[32];
 
     while (1) {
+        // Process incoming navigation commands non-blocking
         if (xQueueReceive(navQueue, &navDir, 0) == pdTRUE) {
             if (navDir == NavDirection::NEXT) {
-                currentMode = nextDisplayMode(currentMode);
+                currentMode = getNextDisplayMode(currentMode);
             } else if (navDir == NavDirection::PREVIOUS) {
-                currentMode = previousDisplayMode(currentMode);
+                currentMode = getPreviousDisplayMode(currentMode);
             }
         }
 
+        // Drain sensor updates non-blocking
         xQueueReceive(displayQueue, &sensorData, 0);
 
+        // Task 34: Handle INACTIVE system state (Blank screen & sleep)
+        if (g_systemState == SystemState::INACTIVE) {
+            ssd1306_clear_screen(&dev, false);
+            vTaskDelay(pdMS_TO_TICKS(200));
+            continue;
+        }
+
+        // Task 33: ACTIVE Behavior - Normal UI rendering
         ssd1306_clear_screen(&dev, false);
+        ssd1306_display_text(&dev, 0, " ROOM MONITOR  ", 15, false);
 
         switch (currentMode) {
             case DisplayMode::TEMPERATURE:
-                ssd1306_display_text(&dev, 0, "ROOM MONITOR", 12, false);
-                ssd1306_display_text(&dev, 2, "Page: Temp", 10, false);
-                snprintf(buffer, sizeof(buffer), "%.1f C", sensorData.temperature);
-                ssd1306_display_text(&dev, 4, buffer, strlen(buffer), false);
+                snprintf(titleBuf, sizeof(titleBuf), "Page: Temp");
+                snprintf(valueBuf, sizeof(valueBuf), "Val: %.1f C", sensorData.temperature);
                 break;
-
             case DisplayMode::HUMIDITY:
-                ssd1306_display_text(&dev, 0, "ROOM MONITOR", 12, false);
-                ssd1306_display_text(&dev, 2, "Page: Humidity", 14, false);
-                snprintf(buffer, sizeof(buffer), "%.1f %%", sensorData.humidity);
-                ssd1306_display_text(&dev, 4, buffer, strlen(buffer), false);
+                snprintf(titleBuf, sizeof(titleBuf), "Page: Humidity");
+                snprintf(valueBuf, sizeof(valueBuf), "Val: %.1f %%", sensorData.humidity);
                 break;
-
             case DisplayMode::LIGHT:
-                ssd1306_display_text(&dev, 0, "ROOM MONITOR", 12, false);
-                ssd1306_display_text(&dev, 2, "Page: Light", 11, false);
-                snprintf(buffer, sizeof(buffer), "%d %%", sensorData.lightLevel);
-                ssd1306_display_text(&dev, 4, buffer, strlen(buffer), false);
+                snprintf(titleBuf, sizeof(titleBuf), "Page: Light");
+                snprintf(valueBuf, sizeof(valueBuf), "Val: %d %%", sensorData.lightLevel);
                 break;
-
             case DisplayMode::MOTION:
-                ssd1306_display_text(&dev, 0, "ROOM MONITOR", 12, false);
-                ssd1306_display_text(&dev, 2, "Page: Motion", 12, false);
-                snprintf(buffer, sizeof(buffer), "%s", sensorData.motionDetected ? "DETECTED" : "CLEAR");
-                ssd1306_display_text(&dev, 4, buffer, strlen(buffer), false);
+                snprintf(titleBuf, sizeof(titleBuf), "Page: Motion");
+                snprintf(valueBuf, sizeof(valueBuf), "Val: %s", sensorData.motionDetected ? "DETECTED" : "CLEAR");
                 break;
         }
+
+        ssd1306_display_text(&dev, 2, titleBuf, 15, false);
+        ssd1306_display_text(&dev, 4, valueBuf, 15, false);
 
         vTaskDelay(pdMS_TO_TICKS(100));
     }

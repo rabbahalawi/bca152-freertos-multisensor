@@ -1,6 +1,9 @@
 #include "system_state.h"
 
-DisplayMode nextDisplayMode(DisplayMode current) {
+// Task 32: Initial system state defaults to ACTIVE
+volatile SystemState g_systemState = SystemState::ACTIVE;
+
+DisplayMode getNextDisplayMode(DisplayMode current) {
     switch (current) {
         case DisplayMode::TEMPERATURE: return DisplayMode::HUMIDITY;
         case DisplayMode::HUMIDITY:    return DisplayMode::LIGHT;
@@ -10,7 +13,7 @@ DisplayMode nextDisplayMode(DisplayMode current) {
     return DisplayMode::TEMPERATURE;
 }
 
-DisplayMode previousDisplayMode(DisplayMode current) {
+DisplayMode getPreviousDisplayMode(DisplayMode current) {
     switch (current) {
         case DisplayMode::TEMPERATURE: return DisplayMode::MOTION;
         case DisplayMode::HUMIDITY:    return DisplayMode::TEMPERATURE;

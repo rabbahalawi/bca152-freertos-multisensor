@@ -14,5 +14,6 @@ struct SensorData {
 
 bool read_dht22(float *temp, float *humidity);
 void vSensorTask(void *pvParameters);
+void vMotionTask(void *pvParameters); // Expose motion task
 
-#endif
+#endif // SENSORS_H

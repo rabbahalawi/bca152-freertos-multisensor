@@ -6,7 +6,9 @@
     { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
     { "type": "board-ssd1306", "id": "oled", "top": 160, "left": 120, "attrs": {} },
     { "type": "wokwi-ky-040", "id": "encoder", "top": -120, "left": 120, "attrs": {} },
-    { "type": "wokwi-dht22", "id": "dht", "top": -120, "left": -100, "attrs": {} }
+    { "type": "wokwi-dht22", "id": "dht", "top": -120, "left": -100, "attrs": {} },
+    { "type": "wokwi-pir-motion-sensor", "id": "pir", "top": 0, "left": -200, "attrs": {} },
+    { "type": "wokwi-photoresistor-sensor", "id": "ldr", "top": 160, "left": -150, "attrs": {} }
   ],
   "connections": [
     [ "esp:GND.1", "oled:GND", "black", [ "v0" ] ],
@@ -22,6 +24,14 @@
 
     [ "esp:GND.3", "dht:GND", "black", [ "v0" ] ],
     [ "esp:3V3", "dht:VCC", "red", [ "v0" ] ],
-    [ "dht:SDA", "esp:4", "green", [ "v0" ] ]
+    [ "dht:SDA", "esp:4", "green", [ "v0" ] ],
+
+    [ "esp:GND.1", "pir:GND", "black", [ "v0" ] ],
+    [ "esp:5V", "pir:VCC", "red", [ "v0" ] ],
+    [ "pir:OUT", "esp:33", "green", [ "v0" ] ],
+
+    [ "esp:GND.1", "ldr:GND", "black", [ "v0" ] ],
+    [ "esp:3V3", "ldr:VCC", "red", [ "v0" ] ],
+    [ "ldr:AO", "esp:34", "orange", [ "v0" ] ]
   ]
 }
