@@ -1,14 +1,14 @@
 #include "sensors.h"
 #include "rtos_objects.h"
 #include "system_state.h"
+#include "alarm.h" 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/event_groups.h" 
 #include "driver/gpio.h"
 #include "esp_adc/adc_oneshot.h"
 #include "esp_timer.h"
 #include "esp_rom_sys.h"
-
-#define PIR_SENSOR_PIN GPIO_NUM_33 // Pin connected to PIR output in diagram.json
 
 bool read_dht22(float *temp, float *humidity) {
     uint8_t data[5] = {0};
@@ -68,6 +68,12 @@ void vSensorTask(void *pvParameters) {
         if (read_dht22(&t, &h)) {
             data.temperature = t;
             data.humidity = h;
+
+            if (evaluateTemperature(t) != AlarmState::NORMAL) {
+                xEventGroupSetBits(g_systemEvents, EVENT_ALARM);
+            } else {
+                xEventGroupClearBits(g_systemEvents, EVENT_ALARM);
+            }
         }
 
         if (adc1_handle != NULL) {
@@ -77,41 +83,13 @@ void vSensorTask(void *pvParameters) {
             }
         }
 
+        // NEW Part XI: Protect the Serial output with the Mutex
+        if (xSemaphoreTake(serialMutex, portMAX_DELAY) == pdTRUE) {
+            printf("[SensorTask] Temp: %.1f C | Hum: %.1f %%\n", data.temperature, data.humidity);
+            xSemaphoreGive(serialMutex);
+        }
+
         xQueueSend(displayQueue, &data, 0);
         vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(2000));
-    }
-}
-
-void vMotionTask(void *pvParameters) {
-    vTaskDelay(pdMS_TO_TICKS(100));
-
-    gpio_config_t pir_conf = {};
-    pir_conf.pin_bit_mask = (1ULL << PIR_SENSOR_PIN);
-    pir_conf.mode = GPIO_MODE_INPUT;
-    pir_conf.pull_up_en = GPIO_PULLUP_DISABLE;
-    pir_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
-    pir_conf.intr_type = GPIO_INTR_DISABLE;
-    gpio_config(&pir_conf);
-
-    TickType_t xLastMotionTime = xTaskGetTickCount();
-    const TickType_t xInactivityTimeout = pdMS_TO_TICKS(15000);
-
-    while (1) {
-        int motionState = gpio_get_level(PIR_SENSOR_PIN);
-
-        if (motionState == 1) {
-            xLastMotionTime = xTaskGetTickCount();
-            
-            if (g_systemState == SystemState::INACTIVE) {
-                g_systemState = SystemState::ACTIVE;
-            }
-        }
-
-        if (g_systemState == SystemState::ACTIVE && 
-           (xTaskGetTickCount() - xLastMotionTime >= xInactivityTimeout)) {
-            g_systemState = SystemState::INACTIVE;
-        }
-
-        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }

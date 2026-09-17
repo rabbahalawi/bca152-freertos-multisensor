@@ -1,8 +1,9 @@
 #ifndef ALARM_H
 #define ALARM_H
 
-constexpr float TEMP_THRESHOLD_LOW  = 18.0f;
-constexpr float TEMP_THRESHOLD_HIGH = 30.0f;
+// Thresholds for testing (adjust if your lab specified different numbers)
+#define TEMP_THRESHOLD_LOW  18.0f
+#define TEMP_THRESHOLD_HIGH 30.0f
 
 enum class AlarmState { 
     NORMAL, 
@@ -10,6 +11,9 @@ enum class AlarmState {
     HIGH_TEMPERATURE 
 }; 
 
-AlarmState evaluateTemperature(float temperature);
+AlarmState evaluateTemperature(float temperature); 
+
+// NEW Part X: Declare the Alarm Task so main.cpp can use it
+void vAlarmTask(void *pvParameters);
 
 #endif // ALARM_H

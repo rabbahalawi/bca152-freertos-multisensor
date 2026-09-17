@@ -6,6 +6,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#include "freertos/event_groups.h" // Added for Part X Event Groups
 #include <stdio.h>
 
 void vDisplayTask(void *pvParameters) {
@@ -35,8 +36,10 @@ void vDisplayTask(void *pvParameters) {
         // Drain sensor updates non-blocking
         xQueueReceive(displayQueue, &sensorData, 0);
 
-        // Task 34: Handle INACTIVE system state (Blank screen & sleep)
-        if (g_systemState == SystemState::INACTIVE) {
+        // NEW Part X: Handle INACTIVE system state using the Event Group
+        EventBits_t uxBits = xEventGroupGetBits(g_systemEvents);
+        if ((uxBits & EVENT_ACTIVE) == 0) {
+            // EVENT_ACTIVE bit is cleared (System is INACTIVE)
             ssd1306_clear_screen(&dev, false);
             vTaskDelay(pdMS_TO_TICKS(200));
             continue;
