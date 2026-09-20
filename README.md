@@ -35,7 +35,7 @@ Developed for **BCA152 Microcontrollers**, Mindanao State University – Iligan 
 
 ## System Architecture
 
-![System State Machine Diagram](docs/images/state-machine-diagram.jpg)
+![System Architecture Diagram](docs/images/architecture-diagram.jpg)
 
 ---
 
