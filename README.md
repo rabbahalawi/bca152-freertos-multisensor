@@ -84,7 +84,7 @@ The system starts **ACTIVE**. `MotionTask` polls the PIR sensor every 100 ms; if
 ---
 
 ## Project Structure
-
+```
 bca152-freertos-multisensor/
 ├── include/ # Header files 
 ├── src/ # Source files 
@@ -97,19 +97,19 @@ bca152-freertos-multisensor/
 │ ├── sensors.cpp
 │ └── system_state.cpp
 ├── test/
-│ └── test_main.cpp # 13 Unity unit tests
+│ └── test_main.cpp 
 ├── docs/
 │ ├── laboratory-report.pdf
-│ └── images/ # README diagrams and screenshots
+│ └── images
 │ ├── architecture-diagram.jpg
 │ ├── task-communication-diagram.jpg
 │ ├── state-machine-diagram.jpg
 │ ├── wokwi-circuit.png
 │ └── finished-system.png
-├── diagram.json # Wokwi circuit definition
-├── wokwi.toml # Wokwi simulator firmware config
+├── diagram.json #
+├── wokwi.toml
 └── platformio.ini
-
+```
 ---
 
 ## Building and Running
