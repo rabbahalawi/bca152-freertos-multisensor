@@ -11,12 +11,13 @@
 #ifndef UNIT_TEST
 extern "C" void app_main() {
     // 0. Initial Debug Checkpoint
-    printf("System starting... \n");
+    printf("BCA152 FreeRTOS Multisensor\n");
+    printf("System starting...\n");
     vTaskDelay(1000 / portTICK_PERIOD_MS); 
 
-printf("Hardware initialization skipped. Creating FreeRTOS objects.\n");
+    printf("Hardware initialization skipped. Creating FreeRTOS objects.\n");
 
-init_rtos_objects();
+    init_rtos_objects();
 
     printf("Objects created. Starting tasks.\n");
 

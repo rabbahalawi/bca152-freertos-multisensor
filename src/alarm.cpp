@@ -24,13 +24,18 @@ void vAlarmTask(void *pvParameters) {
     buzzer_conf.mode = GPIO_MODE_OUTPUT;
     gpio_config(&buzzer_conf);
 
+    bool lastAlarmActive = false;
+
     for (;;) {
-        // React to the alarm bit set by SensorTask via evaluateTemperature()
         EventBits_t bits = xEventGroupGetBits(g_systemEvents);
         bool alarmActive = (bits & EVENT_ALARM) != 0;
 
-        gpio_set_level(BUZZER_PIN, alarmActive ? 1 : 0);
+        if (alarmActive != lastAlarmActive) {
+            printf("[AlarmTask] Alarm state changed -> %s\n", alarmActive ? "ACTIVE" : "NORMAL");
+            lastAlarmActive = alarmActive;
+        }
 
+        gpio_set_level(BUZZER_PIN, alarmActive ? 1 : 0);
         vTaskDelay(pdMS_TO_TICKS(200));
     }
 }
