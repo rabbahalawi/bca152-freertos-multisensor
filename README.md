@@ -53,7 +53,7 @@ Developed for **BCA152 Microcontrollers**, Mindanao State University – Iligan 
 
 ## System State Machine
 
-![System State Machine Diagram](images/state-machine-diagram.jpg)
+![System State Machine Diagram](docs/images/state-machine-diagram.jpg)
 
 The system starts **ACTIVE**. `MotionTask` polls the PIR sensor every 100 ms; if no motion is detected for a continuous 15-second window, the system transitions to **INACTIVE** (OLED blanks). Any motion detected while INACTIVE immediately returns the system to **ACTIVE**.
 
