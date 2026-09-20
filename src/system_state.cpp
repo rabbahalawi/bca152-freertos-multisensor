@@ -1,6 +1,5 @@
 #include "system_state.h"
 
-// Task 32: Initial system state defaults to ACTIVE
 volatile SystemState g_systemState = SystemState::ACTIVE;
 
 DisplayMode getNextDisplayMode(DisplayMode current) {
@@ -21,4 +20,14 @@ DisplayMode getPreviousDisplayMode(DisplayMode current) {
         case DisplayMode::MOTION:      return DisplayMode::LIGHT;
     }
     return DisplayMode::TEMPERATURE;
+}
+
+SystemState evaluateSystemState(SystemState currentState, bool motionDetected, uint32_t elapsedTimeMs, uint32_t timeoutMs) {
+    if (motionDetected) {
+        return SystemState::ACTIVE;
+    }
+    if (currentState == SystemState::ACTIVE && elapsedTimeMs >= timeoutMs) {
+        return SystemState::INACTIVE;
+    }
+    return currentState;
 }

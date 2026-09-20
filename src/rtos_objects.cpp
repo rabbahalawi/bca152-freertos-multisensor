@@ -2,6 +2,7 @@
 #include "sensors.h"      
 #include "display.h"      
 #include "system_state.h" 
+#include "input.h"
 
 // Define global handles
 QueueHandle_t displayQueue = NULL;

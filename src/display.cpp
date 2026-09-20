@@ -1,4 +1,5 @@
 #include "display.h"
+#include "input.h"
 #include "rtos_objects.h"
 #include "system_state.h"
 #include "sensors.h"

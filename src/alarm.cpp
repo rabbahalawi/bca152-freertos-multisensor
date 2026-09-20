@@ -1,39 +1,36 @@
 #include "alarm.h"
 #include "rtos_objects.h"
+#include "sensors.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
-#include "freertos/semphr.h"
-#include <stdio.h> 
+#include "driver/gpio.h"
+#include <stdio.h>
 
-AlarmState evaluateTemperature(float temperature) {
-    if (temperature < TEMP_THRESHOLD_LOW) {
-        return AlarmState::LOW_TEMPERATURE;
-    }
-    if (temperature > TEMP_THRESHOLD_HIGH) {
-        return AlarmState::HIGH_TEMPERATURE;
+#define BUZZER_PIN GPIO_NUM_14
+
+AlarmState evaluateTemperature(float temp) {
+    if (temp < TEMP_THRESHOLD_LOW) {
+        return AlarmState::LOW_TEMP;
+    } else if (temp > TEMP_THRESHOLD_HIGH) {
+        return AlarmState::HIGH_TEMP;
     }
     return AlarmState::NORMAL;
 }
 
 void vAlarmTask(void *pvParameters) {
-    while (1) {
-        EventBits_t uxBits = xEventGroupWaitBits(
-            g_systemEvents, 
-            EVENT_ALARM, 
-            pdFALSE, 
-            pdFALSE, 
-            portMAX_DELAY 
-        );
+    gpio_config_t buzzer_conf = {};
+    buzzer_conf.pin_bit_mask = (1ULL << BUZZER_PIN);
+    buzzer_conf.mode = GPIO_MODE_OUTPUT;
+    gpio_config(&buzzer_conf);
 
-        if ((uxBits & EVENT_ALARM) != 0) {
-            // NEW Part XI: Protect the Serial output with the Mutex
-            if (xSemaphoreTake(serialMutex, portMAX_DELAY) == pdTRUE) {
-                printf(">>> WARNING: Temperature Threshold Alarm Active! <<<\n");
-                xSemaphoreGive(serialMutex);
-            }
-            
-            vTaskDelay(pdMS_TO_TICKS(1000));
-        }
+    for (;;) {
+        // React to the alarm bit set by SensorTask via evaluateTemperature()
+        EventBits_t bits = xEventGroupGetBits(g_systemEvents);
+        bool alarmActive = (bits & EVENT_ALARM) != 0;
+
+        gpio_set_level(BUZZER_PIN, alarmActive ? 1 : 0);
+
+        vTaskDelay(pdMS_TO_TICKS(200));
     }
 }
