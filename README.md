@@ -35,13 +35,13 @@ Developed for **BCA152 Microcontrollers**, Mindanao State University – Iligan 
 
 ## System Architecture
 
-![System Architecture Diagram](images/architecture-diagram.jpg)
+![System State Machine Diagram](docs/images/state-machine-diagram.jpg)
 
 ---
 
 ## FreeRTOS Task Communication
 
-![FreeRTOS Task Communication Diagram](images/task-communication-diagram.jpg)
+![FreeRTOS Task Communication Diagram](docs/images/task-communication-diagram.jpg)
 
 **Synchronization primitives:**
 - **`displayQueue`** — carries the latest `SensorData` struct from `SensorTask` to `DisplayTask`.
@@ -61,13 +61,13 @@ The system starts **ACTIVE**. `MotionTask` polls the PIR sensor every 100 ms; if
 
 ## Wokwi Circuit Diagram
 
-![Wokwi Circuit Diagram](images/wokwi-circuit.png)
+![Wokwi Circuit Diagram](docs/images/wokwi-circuit.png)
 
 ---
 
 ## Finished System (Running Simulation)
 
-![Finished System Running](images/finished-system.png)
+![Finished System Running](docs/images/finished-system.png)
 
 ---
 
@@ -86,8 +86,8 @@ The system starts **ACTIVE**. `MotionTask` polls the PIR sensor every 100 ms; if
 ## Project Structure
 
 bca152-freertos-multisensor/
-├── include/ # Header files (one per module)
-├── src/ # Source files (flat, per Section 40 requirements)
+├── include/ # Header files 
+├── src/ # Source files 
 │ ├── main.cpp
 │ ├── alarm.cpp
 │ ├── display.cpp
@@ -99,8 +99,13 @@ bca152-freertos-multisensor/
 ├── test/
 │ └── test_main.cpp # 13 Unity unit tests
 ├── docs/
-│ └── laboratory-report.pdf
-├── images/ # README diagrams and screenshots
+│ ├── laboratory-report.pdf
+│ └── images/ # README diagrams and screenshots
+│ ├── architecture-diagram.jpg
+│ ├── task-communication-diagram.jpg
+│ ├── state-machine-diagram.jpg
+│ ├── wokwi-circuit.png
+│ └── finished-system.png
 ├── diagram.json # Wokwi circuit definition
 ├── wokwi.toml # Wokwi simulator firmware config
 └── platformio.ini
