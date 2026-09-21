@@ -83,7 +83,6 @@ void vSensorTask(void *pvParameters) {
             }
         }
 
-        // NEW Part XI: Protect the Serial output with the Mutex
         if (xSemaphoreTake(serialMutex, portMAX_DELAY) == pdTRUE) {
             printf("[SensorTask] Temp: %.1f C | Hum: %.1f %% | Light: %d %%\n", data.temperature, data.humidity, data.lightLevel);
             xSemaphoreGive(serialMutex);

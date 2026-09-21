@@ -13,4 +13,4 @@ constexpr float TEMP_THRESHOLD_HIGH = 30.0f;
 AlarmState evaluateTemperature(float temp);
 void vAlarmTask(void *pvParameters);
 
-#endif // ALARM_H
+#endif

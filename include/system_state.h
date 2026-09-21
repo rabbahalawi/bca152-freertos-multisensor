@@ -21,4 +21,4 @@ DisplayMode getNextDisplayMode(DisplayMode current);
 DisplayMode getPreviousDisplayMode(DisplayMode current);
 SystemState evaluateSystemState(SystemState currentState, bool motionDetected, uint32_t elapsedTimeMs, uint32_t timeoutMs);
 
-#endif // SYSTEM_STATE_H
+#endif

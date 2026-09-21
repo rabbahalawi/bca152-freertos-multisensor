@@ -7,7 +7,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
-#include "freertos/event_groups.h" // Added for Part X Event Groups
+#include "freertos/event_groups.h" 
 #include <stdio.h>
 
 void vDisplayTask(void *pvParameters) {
@@ -25,7 +25,6 @@ void vDisplayTask(void *pvParameters) {
     char valueBuf[32];
 
     while (1) {
-        // Process incoming navigation commands non-blocking
         if (xQueueReceive(navQueue, &navDir, 0) == pdTRUE) {
             if (navDir == NavDirection::NEXT) {
                 currentMode = getNextDisplayMode(currentMode);
@@ -34,19 +33,15 @@ void vDisplayTask(void *pvParameters) {
             }
         }
 
-        // Drain sensor updates non-blocking
         xQueueReceive(displayQueue, &sensorData, 0);
 
-        // NEW Part X: Handle INACTIVE system state using the Event Group
         EventBits_t uxBits = xEventGroupGetBits(g_systemEvents);
         if ((uxBits & EVENT_ACTIVE) == 0) {
-            // EVENT_ACTIVE bit is cleared (System is INACTIVE)
             ssd1306_clear_screen(&dev, false);
             vTaskDelay(pdMS_TO_TICKS(200));
             continue;
         }
 
-        // Task 33: ACTIVE Behavior - Normal UI rendering
         ssd1306_clear_screen(&dev, false);
         ssd1306_display_text(&dev, 0, " ROOM MONITOR  ", 15, false);
 

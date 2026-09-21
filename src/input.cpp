@@ -4,7 +4,6 @@
 #include "freertos/task.h"
 
 void vInputTask(void *pvParameters) {
-    // Startup yield to let lower-priority DisplayTask (Priority 1) initialize OLED
     vTaskDelay(pdMS_TO_TICKS(100));
 
     gpio_config_t io_conf = {};

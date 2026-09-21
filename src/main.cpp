@@ -10,7 +10,6 @@
 
 #ifndef UNIT_TEST
 extern "C" void app_main() {
-    // 0. Initial Debug Checkpoint
     printf("BCA152 FreeRTOS Multisensor\n");
     printf("System starting...\n");
     vTaskDelay(1000 / portTICK_PERIOD_MS); 
@@ -21,14 +20,12 @@ extern "C" void app_main() {
 
     printf("Objects created. Starting tasks.\n");
 
-    // 3. Task Creation
     xTaskCreate(vMotionTask,  "Motion Task",  2048, NULL, 3, NULL);
     xTaskCreate(vInputTask,   "Input Task",   2048, NULL, 3, NULL);
     xTaskCreate(vSensorTask,  "Sensor Task",  4096, NULL, 2, NULL); 
     xTaskCreate(vAlarmTask,   "Alarm Task",   2048, NULL, 2, NULL);
     xTaskCreate(vDisplayTask, "Display Task", 4096, NULL, 1, NULL);
 
-    // 4. Scheduler-driven operation
     printf("All tasks started successfully!\n");
 }
 #endif
