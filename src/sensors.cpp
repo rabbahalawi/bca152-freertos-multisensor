@@ -79,7 +79,12 @@ void vSensorTask(void *pvParameters) {
         if (adc1_handle != NULL) {
             int raw_adc = 0;
             if (adc_oneshot_read(adc1_handle, ADC_CHANNEL_6, &raw_adc) == ESP_OK) {
-                data.lightLevel = (int)((raw_adc / 4095.0f) * 100.0f);
+                // Scale against Wokwi max ADC reading (~4015) and clamp between [0, 100]
+                int percent = 100 - (int)((raw_adc / 4015.0f) * 100.0f);
+                if (percent < 0) percent = 0;
+                if (percent > 100) percent = 100;
+
+                data.lightLevel = percent;
             }
         }
 

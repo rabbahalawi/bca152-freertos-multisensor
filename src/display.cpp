@@ -21,6 +21,12 @@ void vDisplayTask(void *pvParameters) {
     DisplayMode currentMode = DisplayMode::TEMPERATURE;
     NavDirection navDir;
 
+    // Track last rendered state so we only redraw on real changes
+    bool wasActive = true;
+    bool firstRender = true;
+    DisplayMode lastRenderedMode = currentMode;
+    SensorData lastRenderedData = sensorData;
+
     char titleBuf[32];
     char valueBuf[32];
 
@@ -37,36 +43,54 @@ void vDisplayTask(void *pvParameters) {
 
         EventBits_t uxBits = xEventGroupGetBits(g_systemEvents);
         if ((uxBits & EVENT_ACTIVE) == 0) {
-            ssd1306_clear_screen(&dev, false);
+            if (wasActive || firstRender) {
+                ssd1306_clear_screen(&dev, false);
+                wasActive = false;
+                firstRender = false;
+            }
             vTaskDelay(pdMS_TO_TICKS(200));
             continue;
         }
 
-        ssd1306_clear_screen(&dev, false);
-        ssd1306_display_text(&dev, 0, " ROOM MONITOR  ", 15, false);
+        bool modeChanged = (currentMode != lastRenderedMode);
+        bool justBecameActive = !wasActive;
+        bool dataChanged =
+            (sensorData.temperature != lastRenderedData.temperature) ||
+            (sensorData.humidity != lastRenderedData.humidity) ||
+            (sensorData.lightLevel != lastRenderedData.lightLevel) ||
+            (sensorData.motionDetected != lastRenderedData.motionDetected);
 
-        switch (currentMode) {
-            case DisplayMode::TEMPERATURE:
-                snprintf(titleBuf, sizeof(titleBuf), "Page: Temp");
-                snprintf(valueBuf, sizeof(valueBuf), "Val: %.1f C", sensorData.temperature);
-                break;
-            case DisplayMode::HUMIDITY:
-                snprintf(titleBuf, sizeof(titleBuf), "Page: Humidity");
-                snprintf(valueBuf, sizeof(valueBuf), "Val: %.1f %%", sensorData.humidity);
-                break;
-            case DisplayMode::LIGHT:
-                snprintf(titleBuf, sizeof(titleBuf), "Page: Light");
-                snprintf(valueBuf, sizeof(valueBuf), "Val: %d %%", sensorData.lightLevel);
-                break;
-            case DisplayMode::MOTION:
-                snprintf(titleBuf, sizeof(titleBuf), "Page: Motion");
-                snprintf(valueBuf, sizeof(valueBuf), "Val: %s", sensorData.motionDetected ? "DETECTED" : "CLEAR");
-                break;
+        if (firstRender || modeChanged || justBecameActive || dataChanged) {
+            ssd1306_display_text(&dev, 0, " ROOM MONITOR  ", 15, false);
+
+            switch (currentMode) {
+                case DisplayMode::TEMPERATURE:
+                    snprintf(titleBuf, sizeof(titleBuf), "Page: Temp     ");
+                    snprintf(valueBuf, sizeof(valueBuf), "Val: %.1f C    ", sensorData.temperature);
+                    break;
+                case DisplayMode::HUMIDITY:
+                    snprintf(titleBuf, sizeof(titleBuf), "Page: Humidity ");
+                    snprintf(valueBuf, sizeof(valueBuf), "Val: %.1f %%   ", sensorData.humidity);
+                    break;
+                case DisplayMode::LIGHT:
+                    snprintf(titleBuf, sizeof(titleBuf), "Page: Light    ");
+                    snprintf(valueBuf, sizeof(valueBuf), "Val: %d %%      ", sensorData.lightLevel);
+                    break;
+                case DisplayMode::MOTION:
+                    snprintf(titleBuf, sizeof(titleBuf), "Page: Motion   ");
+                    snprintf(valueBuf, sizeof(valueBuf), "Val: %s        ", sensorData.motionDetected ? "DETECTED" : "CLEAR");
+                    break;
+            }
+
+            ssd1306_display_text(&dev, 2, titleBuf, 15, false);
+            ssd1306_display_text(&dev, 4, valueBuf, 15, false);
+
+            lastRenderedMode = currentMode;
+            lastRenderedData = sensorData;
+            firstRender = false;
         }
 
-        ssd1306_display_text(&dev, 2, titleBuf, 15, false);
-        ssd1306_display_text(&dev, 4, valueBuf, 15, false);
-
+        wasActive = true;
         vTaskDelay(pdMS_TO_TICKS(100));
     }
 }

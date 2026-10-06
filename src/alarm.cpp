@@ -1,14 +1,27 @@
 #include "alarm.h"
+#include <stdio.h>
+
+// Hide all hardware and RTOS headers from the native compiler
+#ifndef UNIT_TEST
 #include "rtos_objects.h"
 #include "sensors.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
 #include "driver/gpio.h"
-#include <stdio.h>
+#include "driver/ledc.h"
 
 #define BUZZER_PIN GPIO_NUM_14
+#define BUZZER_LEDC_TIMER      LEDC_TIMER_0
+#define BUZZER_LEDC_MODE       LEDC_LOW_SPEED_MODE
+#define BUZZER_LEDC_CHANNEL    LEDC_CHANNEL_0
+#define BUZZER_LEDC_DUTY_RES   LEDC_TIMER_10_BIT   
+#define BUZZER_TONE_FREQ_HZ    2000               
+#define BUZZER_DUTY_ON         512                 
+#define BUZZER_DUTY_OFF        0 
+#endif
 
+// This pure logic remains visible to the native compiler
 AlarmState evaluateTemperature(float temp) {
     if (temp < TEMP_THRESHOLD_LOW) {
         return AlarmState::LOW_TEMP;
@@ -18,11 +31,29 @@ AlarmState evaluateTemperature(float temp) {
     return AlarmState::NORMAL;
 }
 
+// Hide the hardware functions from the native compiler
+#ifndef UNIT_TEST
+static void init_buzzer_pwm() {
+    ledc_timer_config_t timer_conf = {};
+    timer_conf.speed_mode = BUZZER_LEDC_MODE;
+    timer_conf.duty_resolution = BUZZER_LEDC_DUTY_RES;
+    timer_conf.timer_num = BUZZER_LEDC_TIMER;
+    timer_conf.freq_hz = BUZZER_TONE_FREQ_HZ;
+    timer_conf.clk_cfg = LEDC_AUTO_CLK;
+    ledc_timer_config(&timer_conf);
+
+    ledc_channel_config_t channel_conf = {};
+    channel_conf.gpio_num = BUZZER_PIN;
+    channel_conf.speed_mode = BUZZER_LEDC_MODE;
+    channel_conf.channel = BUZZER_LEDC_CHANNEL;
+    channel_conf.timer_sel = BUZZER_LEDC_TIMER;
+    channel_conf.duty = BUZZER_DUTY_OFF;
+    channel_conf.hpoint = 0;
+    ledc_channel_config(&channel_conf);
+}
+
 void vAlarmTask(void *pvParameters) {
-    gpio_config_t buzzer_conf = {};
-    buzzer_conf.pin_bit_mask = (1ULL << BUZZER_PIN);
-    buzzer_conf.mode = GPIO_MODE_OUTPUT;
-    gpio_config(&buzzer_conf);
+    init_buzzer_pwm();
 
     bool lastAlarmActive = false;
 
@@ -35,7 +66,10 @@ void vAlarmTask(void *pvParameters) {
             lastAlarmActive = alarmActive;
         }
 
-        gpio_set_level(BUZZER_PIN, alarmActive ? 1 : 0);
+        ledc_set_duty(BUZZER_LEDC_MODE, BUZZER_LEDC_CHANNEL, alarmActive ? BUZZER_DUTY_ON : BUZZER_DUTY_OFF);
+        ledc_update_duty(BUZZER_LEDC_MODE, BUZZER_LEDC_CHANNEL);
+
         vTaskDelay(pdMS_TO_TICKS(200));
     }
 }
+#endif

@@ -1,6 +1,4 @@
 #include <unity.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "alarm.h"
 #include "system_state.h"
 
@@ -48,9 +46,7 @@ void test_state_inactive_with_motion(void) {
     TEST_ASSERT_EQUAL(SystemState::ACTIVE, evaluateSystemState(SystemState::INACTIVE, true, 0, 15000));
 }
 
-extern "C" void app_main(void) {
-    vTaskDelay(pdMS_TO_TICKS(2000)); 
-
+int main(int argc, char **argv) {
     UNITY_BEGIN();
     
     RUN_TEST(test_temp_below_lower_threshold);
@@ -69,7 +65,5 @@ extern "C" void app_main(void) {
     RUN_TEST(test_state_inactive_no_motion);
     RUN_TEST(test_state_inactive_with_motion);
 
-    UNITY_END();
-
-    fflush(stdout);
+    return UNITY_END();
 }
