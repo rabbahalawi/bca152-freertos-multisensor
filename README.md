@@ -153,7 +153,7 @@ See [`docs/laboratory-report.pdf`](docs/laboratory-report.pdf) for the complete 
 
 This project was successfully implemented and verified with technical assistance and AI collaboration:
 
-### **Project Lead & Developer**
+### **Project Lead**
 * **[Rabbah Alawi / 2024-1998]** – System design, firmware implementation, hardware & Wokwi simulation testing, logic validation, and repository management.
 
 ### **AI Technical Collaborators**
