@@ -149,6 +149,16 @@ See [`docs/laboratory-report.pdf`](docs/laboratory-report.pdf) for the complete 
 
 ---
 
-## Author
+# Acknowledgments & Credits
 
-Rabbah Alawi — BCA152 Student — Mindanao State University – Iligan Institute of Technology
+This project was successfully implemented and verified with technical assistance and AI collaboration:
+
+### **Project Lead & Developer**
+* **[Rabbah Alawi / 2024-1998]** – System design, firmware implementation, hardware & Wokwi simulation testing, logic validation, and repository management.
+
+### **AI Technical Collaborators**
+* **Gemini** – Technical support for PlatformIO environment setup, native C++ unit testing (`[env:native]`), photoresistor ADC calibration calculations, Git version control troubleshooting, and final documentation.
+* **Claude (claude.io)** – Assistance with initial FreeRTOS task architecture, conceptual logic review, sound feedback integration, and code optimization.
+
+---
+*Developed using PlatformIO, FreeRTOS, C++, and the Wokwi Simulator.*
